@@ -1,4 +1,3 @@
-// controllers/orderController.js
 const pool = require('../db/db');
 
 // Function to get all orders
