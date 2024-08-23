@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Route to create a new user
-router.post('/', async (req, res) => {
+router.post('/add', async (req, res) => {
     try {
         const newUser = await userController.createUser(req.body);
         res.status(201).json(newUser);
@@ -36,6 +36,7 @@ router.post('/', async (req, res) => {
         res.status(500).json({ message: 'Error creating user', error });
     }
 });
+
 
 // Route to update an existing user
 router.put('/:id', async (req, res) => {
