@@ -1,59 +1,51 @@
-const categorySchema = require('../schemas/categorySchema');
+// controllers/categoryController.js
+const pool = require('../config/db');
 
-// Controller to get all categories
-const getCategories = async (req, res) => {
-    try {
-        const categories = await categorySchema.getAllCategories();
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to get all categories
+const getAllCategories = async () => {
+    const query = 'SELECT * FROM Categories';
+    const result = await pool.query(query);
+    return result.rows;
 };
 
-// Controller to create a new category
-const createCategory = async (req, res) => {
-    const category = req.body;
-    try {
-        const newCategory = await categorySchema.createCategory(category);
-        res.status(201).json(newCategory);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to get a category by ID
+const getCategoryById = async (id) => {
+    const query = 'SELECT * FROM Categories WHERE category_id = $1';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
 };
 
-// Controller to update an existing category
-const updateCategory = async (req, res) => {
-    const id = parseInt(req.params.id);
-    const category = req.body;
-    try {
-        const updatedCategory = await categorySchema.updateCategory(id, category);
-        if (updatedCategory) {
-            res.status(200).json(updatedCategory);
-        } else {
-            res.status(404).json({ message: 'Category not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to create a new category
+const createCategory = async (category) => {
+    const { category_name, description } = category;
+    const query = `
+        INSERT INTO Categories (category_name, description)
+        VALUES ($1, $2) RETURNING *`;
+    const result = await pool.query(query, [category_name, description]);
+    return result.rows[0];
 };
 
-// Controller to delete a category
-const deleteCategory = async (req, res) => {
-    const id = parseInt(req.params.id);
-    try {
-        const deletedCategory = await categorySchema.deleteCategory(id);
-        if (deletedCategory) {
-            res.status(200).json(deletedCategory);
-        } else {
-            res.status(404).json({ message: 'Category not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to update an existing category
+const updateCategory = async (id, category) => {
+    const { category_name, description } = category;
+    const query = `
+        UPDATE Categories
+        SET category_name = $1, description = $2
+        WHERE category_id = $3 RETURNING *`;
+    const result = await pool.query(query, [category_name, description, id]);
+    return result.rows[0];
+};
+
+// Function to delete a category
+const deleteCategory = async (id) => {
+    const query = 'DELETE FROM Categories WHERE category_id = $1 RETURNING *';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
 };
 
 module.exports = {
-    getCategories,
+    getAllCategories,
+    getCategoryById,
     createCategory,
     updateCategory,
     deleteCategory,

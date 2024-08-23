@@ -1,64 +1,47 @@
-const orderSchema = require('../schemas/orderSchema');
+// controllers/orderController.js
+const pool = require('../config/db');
 
-// Controller to get all orders
-const getOrders = async (req, res) => {
+// Function to get all orders
+const getAllOrders = async () => {
     try {
-        const orders = await orderSchema.getAllOrders();
-        res.status(200).json(orders);
+        const query = 'SELECT * FROM Orders';
+        const result = await pool.query(query);
+        return result.rows;
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching all orders:', error);
+        throw error;
     }
 };
 
-// Controller to get an order by ID
-const getOrder = async (req, res) => {
-    const id = parseInt(req.params.id);
+// Function to get an order by ID
+const getOrderById = async (id) => {
     try {
-        const order = await orderSchema.getOrderById(id);
-        if (order) {
-            res.status(200).json(order);
-        } else {
-            res.status(404).json({ message: 'Order not found' });
-        }
+        const query = 'SELECT * FROM Orders WHERE order_id = $1';
+        const result = await pool.query(query, [id]);
+        return result.rows[0];
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error(`Error fetching order with ID ${id}:`, error);
+        throw error;
     }
 };
 
-// Controller to update an existing order
-const updateOrder = async (req, res) => {
-    const id = parseInt(req.params.id);
-    const order = req.body;
+// Function to create a new order
+const createOrder = async (order) => {
     try {
-        const updatedOrder = await orderSchema.updateOrder(id, order);
-        if (updatedOrder) {
-            res.status(200).json(updatedOrder);
-        } else {
-            res.status(404).json({ message: 'Order not found' });
-        }
+        const { total_amount, user_id } = order;
+        const query = `
+            INSERT INTO Orders (total_amount, user_id)
+            VALUES ($1, $2) RETURNING *`;
+        const result = await pool.query(query, [total_amount, user_id]);
+        return result.rows[0];
     } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-// Controller to delete an order
-const deleteOrder = async (req, res) => {
-    const id = parseInt(req.params.id);
-    try {
-        const deletedOrder = await orderSchema.deleteOrder(id);
-        if (deletedOrder) {
-            res.status(200).json(deletedOrder);
-        } else {
-            res.status(404).json({ message: 'Order not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error creating new order:', error);
+        throw error;
     }
 };
 
 module.exports = {
-    getOrders,
-    getOrder,
-    updateOrder,
-    deleteOrder,
+    getAllOrders,
+    getOrderById,
+    createOrder,
 };

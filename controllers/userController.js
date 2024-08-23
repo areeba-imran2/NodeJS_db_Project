@@ -1,60 +1,51 @@
-const userSchema = require('../schemas/userSchema');
+const pool = require('../config/db');
 
-// Controller to get all users
-const getUsers = async (req, res) => {
-    try {
-        const users = await userSchema.getAllUsers();
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to get all users
+const getAllUsers = async () => {
+    const query = 'SELECT * FROM Users';
+    const result = await pool.query(query);
+    return result.rows;
 };
 
-// Controller to get a user by ID
-const getUser = async (req, res) => {
-    const id = parseInt(req.params.id);
-    try {
-        const user = await userSchema.getUserById(id);
-        if (user) {
-            res.status(200).json(user);
-        } else {
-            res.status(404).json({ message: 'User not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to get a user by ID
+const getUserById = async (id) => {
+    const query = 'SELECT * FROM Users WHERE user_id = $1';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
 };
 
-// Controller to create a new user
-const createUser = async (req, res) => {
-    const user = req.body;
-    try {
-        const newUser = await userSchema.createUser(user);
-        res.status(201).json(newUser);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to create a new user
+const createUser = async (user) => {
+    const { first_name, last_name, email, phone_number, address } = user;
+    const query = `
+        INSERT INTO Users (first_name, last_name, email, phone_number, address)
+        VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+    const result = await pool.query(query, [first_name, last_name, email, phone_number, address]);
+    return result.rows[0];
 };
 
-// Controller to update an existing user
-const updateUser = async (req, res) => {
-    const id = parseInt(req.params.id);
-    const user = req.body;
-    try {
-        const updatedUser = await userSchema.updateUser(id, user);
-        if (updatedUser) {
-            res.status(200).json(updatedUser);
-        } else {
-            res.status(404).json({ message: 'User not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to update an existing user
+const updateUser = async (id, user) => {
+    const { first_name, last_name, email, phone_number, address } = user;
+    const query = `
+        UPDATE Users
+        SET first_name = $1, last_name = $2, email = $3, phone_number = $4, address = $5
+        WHERE user_id = $6 RETURNING *`;
+    const result = await pool.query(query, [first_name, last_name, email, phone_number, address, id]);
+    return result.rows[0];
+};
+
+// Function to delete a user
+const deleteUser = async (id) => {
+    const query = 'DELETE FROM Users WHERE user_id = $1 RETURNING *';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
 };
 
 module.exports = {
-    getUsers,
-    getUser,
+    getAllUsers,
+    getUserById,
     createUser,
     updateUser,
+    deleteUser,
 };

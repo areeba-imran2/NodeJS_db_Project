@@ -1,75 +1,50 @@
-const productSchema = require('../schemas/productSchema');
+const pool = require('../config/db');
 
-// Controller to get all products
-const getProducts = async (req, res) => {
-    try {
-        const products = await productSchema.getAllProducts();
-        res.status(200).json(products);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to get all products
+const getAllProducts = async () => {
+    const query = 'SELECT * FROM Products';
+    const result = await pool.query(query);
+    return result.rows;
 };
 
-// Controller to get a product by ID
-const getProduct = async (req, res) => {
-    const id = parseInt(req.params.id);
-    try {
-        const product = await productSchema.getProductById(id);
-        if (product) {
-            res.status(200).json(product);
-        } else {
-            res.status(404).json({ message: 'Product not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to get a product by ID
+const getProductById = async (id) => {
+    const query = 'SELECT * FROM Products WHERE product_id = $1';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
 };
 
-// Controller to create a new product
-const createProduct = async (req, res) => {
-    const product = req.body;
-    try {
-        const newProduct = await productSchema.createProduct(product);
-        res.status(201).json(newProduct);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to create a new product
+const createProduct = async (product) => {
+    const { product_name, product_price, product_quantity, description } = product;
+    const query = `
+        INSERT INTO Products (product_name, product_price, product_quantity, description)
+        VALUES ($1, $2, $3, $4) RETURNING *`;
+    const result = await pool.query(query, [product_name, product_price, product_quantity, description]);
+    return result.rows[0];
 };
 
-// Controller to update an existing product
-const updateProduct = async (req, res) => {
-    const id = parseInt(req.params.id);
-    const product = req.body;
-    try {
-        const updatedProduct = await productSchema.updateProduct(id, product);
-        if (updatedProduct) {
-            res.status(200).json(updatedProduct);
-        } else {
-            res.status(404).json({ message: 'Product not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to update an existing product
+const updateProduct = async (id, product) => {
+    const { product_name, product_price, product_quantity, description } = product;
+    const query = `
+        UPDATE Products
+        SET product_name = $1, product_price = $2, product_quantity = $3, description = $4, updated_at = CURRENT_TIMESTAMP
+        WHERE product_id = $5 RETURNING *`;
+    const result = await pool.query(query, [product_name, product_price, product_quantity, description, id]);
+    return result.rows[0];
 };
 
-// Controller to delete a product
-const deleteProduct = async (req, res) => {
-    const id = parseInt(req.params.id);
-    try {
-        const deletedProduct = await productSchema.deleteProduct(id);
-        if (deletedProduct) {
-            res.status(200).json(deletedProduct);
-        } else {
-            res.status(404).json({ message: 'Product not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// Function to delete a product
+const deleteProduct = async (id) => {
+    const query = 'DELETE FROM Products WHERE product_id = $1 RETURNING *';
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
 };
 
 module.exports = {
-    getProducts,
-    getProduct,
+    getAllProducts,
+    getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
