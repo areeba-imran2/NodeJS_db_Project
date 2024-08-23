@@ -1,29 +1,45 @@
+// index.js
 const express = require('express');
-const bodyParser = require('body-parser');
-const productRoutes = require('./routes/productRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const userRoutes = require('./routes/userRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-require('dotenv').config();
-
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(bodyParser.json());
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
 
-// Use routes
-app.use('/products', productRoutes);
-app.use('/orders', orderRoutes);
+// Middleware for logging
+const logger = require('./middleware/logger');
+
+// Middleware for handling 404 errors
+const notFound = require('./middleware/notFound');
+
+// Middleware setup
+app.use(logger);
+app.use(express.json());
+
+// Route handlers
 app.use('/users', userRoutes);
+app.use('/orders', orderRoutes);
 app.use('/categories', categoryRoutes);
+app.use('/products', productRoutes);
 
-// Define a root route
+// Default route
 app.get('/', (req, res) => {
     res.send('Welcome to the API!');
 });
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// Middleware for handling 404 errors
+app.use(notFound);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Internal Server Error', error: err.message });
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
