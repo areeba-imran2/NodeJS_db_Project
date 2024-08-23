@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require('../db/db');
 
 // Function to get all products
 const getAllProducts = async () => {

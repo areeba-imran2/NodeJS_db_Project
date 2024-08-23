@@ -1,5 +1,5 @@
 // controllers/categoryController.js
-const pool = require('../config/db');
+const pool = require('../db/db');
 
 // Function to get all categories
 const getAllCategories = async () => {
